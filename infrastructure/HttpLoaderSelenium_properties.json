@@ -1,0 +1,52 @@
+[
+  {
+    "ParameterKey": "LambdaVersionNumber",
+    "ParameterValue": "#{LambdaVersionNumber}"
+  },
+  {
+    "ParameterKey": "SystemTag",
+    "ParameterValue": "#{SystemTag}"
+  },
+  {
+    "ParameterKey": "ApplicationTag",
+    "ParameterValue": "#{ApplicationTag}"
+  },
+   {
+    "ParameterKey": "ProjectTag",
+    "ParameterValue": "#{ProjectTag}"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "#{Octopus.Environment.Name|ToLower}"
+  },
+  {
+    "ParameterKey": "LambdaMemorySize",
+    "ParameterValue": "#{LambdaMemorySize}"
+  },
+  {
+    "ParameterKey": "LambdaTimeOut",
+    "ParameterValue": "#{LambdaTimeOut}"
+  },
+  
+  {
+    "ParameterKey": "LambdaImageUri",
+    "ParameterValue": "#{LambdaImageUri}"
+  },
+  {
+    "ParameterKey": "PrimarySubnetId",
+    "ParameterValue": "#{Fundamentals:PrimarySubnetId}"
+  },
+  {
+    "ParameterKey": "SecondarySubnetId",
+    "ParameterValue": "#{Fundamentals:SecondarySubnetId}"
+  },
+  {
+    "ParameterKey": "DefaultSecurityGroupId",
+    "ParameterValue": "#{Fundamentals:DefaultSecurityGroupId}"
+  },
+    {
+        "ParameterKey": "FundamentalsProductionAlertsTopicArn",
+        "ParameterValue": "#{FundamentalsProductionAlertsTopicArn}"
+    }
+ 
+]

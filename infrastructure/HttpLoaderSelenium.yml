@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 
+  This stack is for the deployment of Selenium on lambda through container to be used by HttpLoader
+
+Parameters:
+  LambdaVersionNumber:
+    Type: String
+  SystemTag:
+    Description: A tag value that will be assigned to resources
+    Type: String
+  ApplicationTag:
+    Description: A tag value that will be assigned to resources
+    Type: String
+  ProjectTag: 
+    Description: A tag value that will be assigned to resources
+    Type: String
+  Environment:
+    Type: String
+    Description: The environment that this stack is being deployed to
+    AllowedValues:
+      - qa
+      - systest
+      - uat
+      - live
+      - live-dr
+    Default: systest  
+  LambdaMemorySize:
+    Type: Number
+    Description: Total memory allocated to the lambda when it executes (in MB)
+    Default: 728 
+  LambdaTimeOut:
+    Type: Number
+    Description: Total time allocated to the lambda execution (in sec.)
+    Default: 60
+  LambdaImageUri:
+    Type: String
+    Description: The lambda code URI in ECR
+  PrimarySubnetId:
+    Description: Primary subnet Id
+    Type: String
+  SecondarySubnetId:
+    Description: Secondary subnet Id
+    Type: String
+  DefaultSecurityGroupId:
+    Description: Default security group Id
+    Type: String
+  FundamentalsProductionAlertsTopicArn:
+    Description: The Arn of the alerts topic
+    Type: String
+
+Conditions: 
+  IsDR: !Equals [!Ref Environment, "live-dr"]
+
+Resources: 
+  HttpLoaderSelenium:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: !Sub "Version ${LambdaVersionNumber}: Selenium in lambda container for HttpLoader"
+      Role:
+        Fn::GetAtt: 
+          - "HttpLoaderSeleniumRole"
+          - "Arn"
+      PackageType: Image
+      Code:
+        ImageUri: !Ref LambdaImageUri 
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeOut
+      VpcConfig:
+        SecurityGroupIds: 
+          - !Ref DefaultSecurityGroupId
+        SubnetIds: 
+          - !Ref PrimarySubnetId
+          - !Ref SecondarySubnetId
+      Tags:
+        - Key: SystemTag
+          Value: !Ref SystemTag
+        - Key: Application
+          Value: !Ref ApplicationTag
+        - Key: Project
+          Value: !Ref ProjectTag
+
+  HttpLoaderSeleniumRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: HttpLoaderSelenium     
+      Tags:
+        - Key: SystemTag
+          Value: !Ref SystemTag
+        - Key: Application
+          Value: !Ref ApplicationTag
+        - Key: Project
+          Value: !Ref ProjectTag
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal: 
+              Service: 
+                - "lambda.amazonaws.com"
+      ManagedPolicyArns: 
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  HttpLoaderSeleniumErrorCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub HttpLoaderSelenium Lambda errors detected - ${Environment}
+      AlarmDescription: Error count alarm for the HttpLoaderSelenium lambda
+      AlarmActions:
+      - !Ref FundamentalsProductionAlertsTopicArn
+      OKActions:
+      - !Ref FundamentalsProductionAlertsTopicArn
+      InsufficientDataActions:
+      - !Ref FundamentalsProductionAlertsTopicArn
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: !Ref HttpLoaderSelenium
+      Statistic: Sum
+      Period: '60'
+      EvaluationPeriods: '60'
+      Threshold: '1'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DatapointsToAlarm: 1
+      TreatMissingData: notBreaching
